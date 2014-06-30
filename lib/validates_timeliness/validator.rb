@@ -31,6 +31,8 @@ module ValidatesTimeliness
       @type = options.delete(:type) || :datetime
       @allow_nil, @allow_blank = options.delete(:allow_nil), options.delete(:allow_blank)
 
+      setup_attributes(options[:class]) if options[:class]
+
       if range = options.delete(:between)
         raise ArgumentError, ":between must be a Range or an Array" unless range.is_a?(Range) || range.is_a?(Array)
         options[:on_or_after] = range.first
@@ -45,10 +47,17 @@ module ValidatesTimeliness
       super
     end
 
-    def setup(model)
+    def setup_attributes(model)
       if model.respond_to?(:timeliness_validated_attributes)
         model.timeliness_validated_attributes ||= []
         model.timeliness_validated_attributes |= @attributes
+      end
+    end
+
+    # Rails 4 Support
+    if Gem::Version.new(ActiveModel::VERSION::STRING) <= Gem::Version.new('3.2.18')
+      def setup(model)
+        setup_attributes(model)
       end
     end
 
